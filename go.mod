@@ -1,3 +1,3 @@
-module github.com/spritesprite/connpool.git
+module github.com/spritesprite/connpool
 
 go 1.13
