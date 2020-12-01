@@ -58,7 +58,7 @@ func (p *ConnPool) init() error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("[ConnPool] enqueue %s->%s", conn.LocalAddr().String(), conn.RemoteAddr().String())
+		fmt.Printf("[ConnPool] enqueue %s->%s\n", conn.LocalAddr().String(), conn.RemoteAddr().String())
 		p.conns <- conn
 	}
 	return nil
@@ -77,14 +77,14 @@ func (p *ConnPool) Get() (net.Conn, error) {
 			if err != nil {
 				return
 			}
-			fmt.Printf("[ConnPool] enqueue %s->%s", conn.LocalAddr().String(), conn.RemoteAddr().String())
+			fmt.Printf("[ConnPool] enqueue %s->%s\n", conn.LocalAddr().String(), conn.RemoteAddr().String())
 			p.conns <- conn
 		}()
 	}
 
 	select {
 	case conn := <-p.conns:
-		fmt.Printf("[ConnPool] dequeue %s->%s", conn.LocalAddr().String(), conn.RemoteAddr().String())
+		fmt.Printf("[ConnPool] dequeue %s->%s\n", conn.LocalAddr().String(), conn.RemoteAddr().String())
 		return p.packConn(conn), nil
 	}
 }
@@ -159,7 +159,7 @@ func (p *ConnPool) Put(conn net.Conn) error {
 
 	select {
 	case p.conns <- conn:
-		fmt.Printf("[ConnPool] enqueue %s->%s", conn.LocalAddr().String(), conn.RemoteAddr().String())
+		fmt.Printf("[ConnPool] enqueue %s->%s\n", conn.LocalAddr().String(), conn.RemoteAddr().String())
 		return nil
 	default:
 		return conn.Close()
@@ -186,7 +186,7 @@ func (p *ConnPool) Remove(conn net.Conn) error {
 	case *CpConn:
 		return conn.(*CpConn).Destroy()
 	default:
-		fmt.Printf("[ConnPool] close %s->%s", conn.LocalAddr().String(), conn.RemoteAddr().String())
+		fmt.Printf("[ConnPool] close %s->%s\n", conn.LocalAddr().String(), conn.RemoteAddr().String())
 		return conn.Close()
 	}
 	return nil
@@ -203,7 +203,7 @@ func (p *ConnPool) createConn() (net.Conn, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Cannot create new connection.%s", err)
 	}
-	fmt.Printf("[ConnPool] create %s->%s", conn.LocalAddr().String(), conn.RemoteAddr().String())
+	fmt.Printf("[ConnPool] create %s->%s\n", conn.LocalAddr().String(), conn.RemoteAddr().String())
 	p.totalConnNum = p.totalConnNum + 1
 	return conn, nil
 }
