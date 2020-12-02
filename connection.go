@@ -31,14 +31,14 @@ func (conn *CpConn) Close() error {
 	}
 
 	if len(conn.pool.conns) < conn.pool.minChannelConnNum {
-		go func() {
-			newConn, err := conn.pool.createConn()
+		go func(pool *ConnPool) {
+			newConn, err := pool.createConn()
 			if err != nil {
 				return
 			}
 			fmt.Printf("[ConnPool] Close() enqueue %s->%s\n", newConn.LocalAddr().String(), newConn.RemoteAddr().String())
-			conn.pool.conns <- newConn
-		}()
+			pool.conns <- newConn
+		}(conn.pool)
 	}
 	return conn.Destroy()
 	// err := conn.pool.Remove(conn.Conn) // not sure if this is right
