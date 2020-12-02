@@ -2,6 +2,7 @@ package connpool
 
 import (
 	"errors"
+	"fmt"
 	"net"
 )
 
@@ -35,11 +36,13 @@ func (conn *CpConn) Close() error {
 			if err != nil {
 				return
 			}
+			fmt.Printf("[ConnPool] Close() enqueue %s->%s\n", newConn.LocalAddr().String(), newConn.RemoteAddr().String())
 			conn.pool.conns <- newConn
 		}()
 	}
-	err := conn.pool.Remove(conn.Conn) // not sure if this is right
-	return err
+	return conn.Destroy()
+	// err := conn.pool.Remove(conn.Conn) // not sure if this is right
+	// return err
 }
 
 // // Close will push connection back to connection pool. It will not close the real connection.
