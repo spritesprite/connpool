@@ -2,7 +2,6 @@ package connpool
 
 import (
 	"errors"
-	"fmt"
 	"net"
 )
 
@@ -36,7 +35,7 @@ func (conn *CpConn) Close() error {
 			if err != nil {
 				return
 			}
-			fmt.Printf("[ConnPool] Close() enqueue %s->%s\n", newConn.LocalAddr().String(), newConn.RemoteAddr().String())
+			// fmt.Printf("[ConnPool] Close() enqueue %s->%s\n", newConn.LocalAddr().String(), newConn.RemoteAddr().String())
 			pool.conns <- newConn
 		}(conn.pool)
 	}
