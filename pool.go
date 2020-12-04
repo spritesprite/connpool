@@ -52,6 +52,12 @@ func NewPool(minConn, maxConn, minRemain int, connCreator func() (net.Conn, erro
 	return pool, nil
 }
 
+func NewClosedPool() *ConnPool {
+	pool := &ConnPool{}
+	pool.closed = true
+	return pool
+}
+
 func (p *ConnPool) init() error {
 	for i := 0; i < p.minConnNum; i++ {
 		conn, err := p.createConn()
