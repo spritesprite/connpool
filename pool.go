@@ -148,7 +148,7 @@ func (p *ConnPool) Close() error {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	p.closed = true
-	close(p.conns)
+	// close(p.conns)
 	for conn := range p.conns {
 		conn.Close()
 	}
