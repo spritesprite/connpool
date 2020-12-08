@@ -29,7 +29,7 @@ func (conn *CpConn) Close() error {
 		return errors.New("Connection not belong any connection pool.")
 	}
 
-	go p.supplementConn()
+	go conn.pool.supplementConn()
 
 	return conn.Destroy()
 	// err := conn.pool.Remove(conn.Conn) // not sure if this is right
