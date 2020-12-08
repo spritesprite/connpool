@@ -203,11 +203,26 @@ func (p *ConnPool) packConn(conn net.Conn) net.Conn {
 	return ret
 }
 
+func (p *ConnPool) createConnNolock() (net.Conn, error) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	if p.totalConnNum >= p.maxConnNum {
+		return nil, fmt.Errorf("Connot Create new connection. Now has %d.Max is %d", p.totalConnNum, p.maxConnNum)
+	}
+	conn, err := p.connCreator()
+	if err != nil {
+		return nil, fmt.Errorf("Cannot create new connection.%s", err)
+	}
+	// fmt.Printf("[ConnPool] createConn() create %s->%s\n", conn.LocalAddr().String(), conn.RemoteAddr().String())
+	p.totalConnNum = p.totalConnNum + 1
+	return conn, nil
+}
+
 func (p *ConnPool) supplementConn() {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	if len(p.conns) < p.minChannelConnNum && !p.closed {
-		newConn, err := p.createConn()
+		newConn, err := p.createConnNolock()
 		if err != nil {
 			return
 		}
