@@ -204,8 +204,6 @@ func (p *ConnPool) packConn(conn net.Conn) net.Conn {
 }
 
 func (p *ConnPool) createConnNolock() (net.Conn, error) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
 	if p.totalConnNum >= p.maxConnNum {
 		return nil, fmt.Errorf("Connot Create new connection. Now has %d.Max is %d", p.totalConnNum, p.maxConnNum)
 	}
