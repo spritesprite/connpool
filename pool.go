@@ -77,16 +77,7 @@ func (p *ConnPool) Get() (net.Conn, error) {
 		return nil, errPoolIsClose
 	}
 
-	if len(p.conns) < p.minChannelConnNum {
-		go func() {
-			newConn, err := p.createConn()
-			if err != nil {
-				return
-			}
-			// fmt.Printf("[ConnPool] Get() enqueue %s->%s\n", newConn.LocalAddr().String(), newConn.RemoteAddr().String())
-			p.conns <- newConn
-		}()
-	}
+	go p.supplementConn()
 
 	select {
 	case conn := <-p.conns:
@@ -101,16 +92,8 @@ func (p *ConnPool) GetWithTimeout(timeout time.Duration) (net.Conn, error) {
 	if p.isClosed() == true {
 		return nil, errPoolIsClose
 	}
-	if len(p.conns) < p.minChannelConnNum {
-		go func() {
-			newConn, err := p.createConn()
-			if err != nil {
-				return
-			}
-			// fmt.Printf("[ConnPool] Get() enqueue %s->%s\n", newConn.LocalAddr().String(), newConn.RemoteAddr().String())
-			p.conns <- newConn
-		}()
-	}
+
+	go p.supplementConn()
 
 	select {
 	case conn := <-p.conns:
@@ -124,13 +107,9 @@ func (p *ConnPool) GetWithContext(ctx context.Context) (net.Conn, error) {
 	if p.isClosed() == true {
 		return nil, errPoolIsClose
 	}
-	go func() {
-		conn, err := p.createConn()
-		if err != nil {
-			return
-		}
-		p.conns <- conn
-	}()
+
+	go p.supplementConn()
+
 	select {
 	case conn := <-p.conns:
 		return p.packConn(conn), nil
@@ -148,7 +127,7 @@ func (p *ConnPool) Close() error {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	p.closed = true
-	// close(p.conns)
+	close(p.conns)
 	for conn := range p.conns {
 		conn.Close()
 	}
@@ -222,4 +201,17 @@ func (p *ConnPool) packConn(conn net.Conn) net.Conn {
 	ret := &CpConn{pool: p}
 	ret.Conn = conn
 	return ret
+}
+
+func (p *ConnPool) supplementConn() {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	if len(p.conns) < p.minChannelConnNum && !p.closed {
+		newConn, err := p.createConn()
+		if err != nil {
+			return
+		}
+		// fmt.Printf("[ConnPool] supplementConn() enqueue %s->%s\n", newConn.LocalAddr().String(), newConn.RemoteAddr().String())
+		p.conns <- newConn
+	}
 }

@@ -29,16 +29,8 @@ func (conn *CpConn) Close() error {
 		return errors.New("Connection not belong any connection pool.")
 	}
 
-	if len(conn.pool.conns) < conn.pool.minChannelConnNum {
-		go func(pool *ConnPool) {
-			newConn, err := pool.createConn()
-			if err != nil {
-				return
-			}
-			// fmt.Printf("[ConnPool] Close() enqueue %s->%s\n", newConn.LocalAddr().String(), newConn.RemoteAddr().String())
-			pool.conns <- newConn
-		}(conn.pool)
-	}
+	go p.supplementConn()
+
 	return conn.Destroy()
 	// err := conn.pool.Remove(conn.Conn) // not sure if this is right
 	// return err
