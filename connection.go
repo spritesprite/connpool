@@ -25,7 +25,7 @@ type CpConn struct {
 // Close will close the real connection, remove it from the pool, and create a new connection.
 func (conn *CpConn) Close() error {
 	// return conn.Destroy()
-	return conn.Close()
+	return conn.Conn.Close()
 }
 
 // // Close will close the real connection, remove it from the pool, and create a new connection.
