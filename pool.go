@@ -24,6 +24,7 @@ type ConnPool struct {
 	connCreator       func() (net.Conn, error)
 	pendingCount      int32
 	lastSuccTime      float64
+	wg                sync.WaitGroup
 }
 
 var (
@@ -141,9 +142,11 @@ func (p *ConnPool) Close() error {
 		return errPoolIsClose
 	}
 	p.lock.Lock()
-	defer p.lock.Unlock()
 	p.closed = true
-	// close(p.conns) // panic is possible if we just close it here
+	p.lock.Unlock()
+
+	p.wg.Wait() // might panic if we just close p.conns without waiting
+	close(p.conns)
 	for conn := range p.conns {
 		conn.Close()
 	}
@@ -190,6 +193,8 @@ func (p *ConnPool) packConn(conn net.Conn) net.Conn {
 }
 
 func (p *ConnPool) supplementConn() {
+	p.wg.Add(1)
+	defer p.wg.Done()
 	if p.isClosed() {
 		return
 	}
@@ -203,6 +208,7 @@ func (p *ConnPool) supplementConn() {
 			return
 		}
 		// fmt.Printf("[ConnPool] supplementConn() enqueue %s->%s\n", newConn.LocalAddr().String(), newConn.RemoteAddr().String())
+
 		p.conns <- newConn
 	}
 }
