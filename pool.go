@@ -32,10 +32,9 @@ var (
 	errContextClose = errors.New("Get Connection close by context")
 )
 
-// NewPool return new ConnPool. It base on channel. It will init minConn connections in channel first.
-// When Get()/GetWithTimeout called, if channel still has connection it will get connection from channel.
-// Otherwise ConnPool check number of connection which had already created as the number are less than maxConn,
-// it use connCreator function to create new connection.
+// NewPool returns a new ConnPool.
+// It will init minConn connections in channel first using connCreator.
+// The total connection number should be no more than maxConn.
 func NewPool(minConn, maxConn, minRemain int, connCreator func() (net.Conn, error)) (*ConnPool, error) {
 	if minConn > maxConn || minConn < 0 || maxConn <= 0 {
 		return nil, errors.New("Number of connection bound error")
